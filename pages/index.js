@@ -10,16 +10,12 @@ const Q_CONFIG = {
 }
 
 const ACTION_COLORS = {
-  'CEO-only': '#E84040',
-  Delegate: '#F5A623',
-  Schedule: '#00D4AA',
-  Drop: '#444',
+  'CEO-only': '#E84040', Delegate: '#F5A623', Schedule: '#00D4AA', Drop: '#444',
 }
 
 const fd = d => new Date(d).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 const ft = d => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-// ── Lock screen ──────────────────────────────────────────────────────────────
 function LockScreen({ onUnlock }) {
   const [pw, setPw] = useState('')
   const [err, setErr] = useState(false)
@@ -42,15 +38,12 @@ function LockScreen({ onUnlock }) {
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <input
-          type="password"
-          placeholder="Password"
-          value={pw}
+        <input type="password" placeholder="Password" value={pw}
           onChange={e => { setPw(e.target.value); setErr(false) }}
           onKeyDown={e => e.key === 'Enter' && submit()}
-          style={{ background: '#111', border: `1px solid ${err ? '#E84040' : '#222'}`, color: '#ddd', padding: '10px 14px', fontSize: 13, outline: 'none', width: 220 }}
-        />
-        <button onClick={submit} disabled={loading} style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', opacity: loading ? 0.6 : 1 }}>
+          style={{ background: '#111', border: `1px solid ${err ? '#E84040' : '#222'}`, color: '#ddd', padding: '10px 14px', fontSize: 13, outline: 'none', width: 220 }} />
+        <button onClick={submit} disabled={loading}
+          style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', opacity: loading ? 0.6 : 1 }}>
           {loading ? '...' : 'Enter'}
         </button>
       </div>
@@ -59,21 +52,30 @@ function LockScreen({ onUnlock }) {
   )
 }
 
-// ── Task card ─────────────────────────────────────────────────────────────────
-function TaskCard({ task, quadrant, onToggleDone, onRemove }) {
-  const cfg = Q_CONFIG[quadrant]
+function TaskCard({ task, onToggleDone, onRemove, onReprioritise, showReprioritise }) {
+  const cfg = Q_CONFIG[task.quadrant] || Q_CONFIG.Q4
   return (
     <div style={{ background: '#ffffff04', padding: '10px 12px', borderLeft: `2px solid ${task.done ? '#1e1e1e' : cfg.border + '55'}`, opacity: task.done ? 0.35 : 1, transition: 'opacity 0.3s', marginBottom: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => onToggleDone(task.id)} style={{ width: 14, height: 14, border: `1px solid ${task.done ? cfg.color : '#2a2a2a'}`, background: task.done ? cfg.color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0, transition: 'all 0.2s' }}>
+          <button onClick={() => onToggleDone(task.id)}
+            style={{ width: 14, height: 14, border: `1px solid ${task.done ? cfg.color : '#2a2a2a'}`, background: task.done ? cfg.color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0, transition: 'all 0.2s' }}>
             {task.done && <span style={{ color: '#000', fontSize: 8, fontWeight: 900 }}>✓</span>}
           </button>
+          <span style={{ fontSize: 9, color: cfg.color, border: `1px solid ${cfg.border}44`, padding: '1px 4px', letterSpacing: 1, fontWeight: 700 }}>{task.quadrant}</span>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#555', border: '1px solid #252525', padding: '1px 4px', letterSpacing: 1 }}>{task.priority}</span>
           <span style={{ fontSize: 9, fontWeight: 700, border: `1px solid ${ACTION_COLORS[task.action]}55`, color: ACTION_COLORS[task.action], padding: '1px 4px', letterSpacing: 1, textTransform: 'uppercase' }}>{task.action}</span>
           {task.delegate_to && <span style={{ fontSize: 9, color: '#F5A623' }}>→ {task.delegate_to}</span>}
         </div>
-        <button onClick={() => onRemove(task.id)} style={{ background: 'transparent', border: 'none', color: '#252525', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {showReprioritise && (
+            <select value={task.priority || 'P1'} onChange={e => onReprioritise(task.id, e.target.value)}
+              style={{ background: '#111', border: '1px solid #222', color: '#555', fontSize: 9, padding: '1px 3px', fontFamily: 'inherit' }}>
+              {['P1','P2','P3'].map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )}
+          <button onClick={() => onRemove(task.id)} style={{ background: 'transparent', border: 'none', color: '#252525', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+        </div>
       </div>
       <div style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 3, color: task.done ? '#2a2a2a' : '#ccc', textDecoration: task.done ? 'line-through' : 'none' }}>{task.text}</div>
       <div style={{ fontSize: 10, color: '#333', lineHeight: 1.4, fontStyle: 'italic' }}>{task.reason}</div>
@@ -81,7 +83,6 @@ function TaskCard({ task, quadrant, onToggleDone, onRemove }) {
   )
 }
 
-// ── Main app ──────────────────────────────────────────────────────────────────
 export default function Home() {
   const [authed, setAuthed] = useState(false)
   const [input, setInput] = useState('')
@@ -90,12 +91,17 @@ export default function Home() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [extracting, setExtracting] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
   const [error, setError] = useState(null)
+  const [view, setView] = useState('today')
   const [activeQ, setActiveQ] = useState(null)
-  const [view, setView] = useState('matrix')
   const [showDone, setShowDone] = useState(false)
   const [drag, setDrag] = useState(false)
   const [dbReady, setDbReady] = useState(false)
+  const [todayIds, setTodayIds] = useState(new Set())
+  const [suggestedIds, setSuggestedIds] = useState([])
+  const [suggestReasons, setSuggestReasons] = useState({})
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const taRef = useRef(null)
   const fileRef = useRef(null)
 
@@ -103,17 +109,15 @@ export default function Home() {
     if (taRef.current) { taRef.current.style.height = 'auto'; taRef.current.style.height = taRef.current.scrollHeight + 'px' }
   }, [input])
 
-  // Load persisted data on auth
   const loadData = useCallback(async () => {
-    const [tasksRes, historyRes] = await Promise.all([
+    const [tasksRes, historyRes, todayRes] = await Promise.all([
       supabase.from('tasks').select('*').order('created_at', { ascending: true }),
-      supabase.from('sessions').select('*').order('created_at', { ascending: false }).limit(10)
+      supabase.from('sessions').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('today_tasks').select('task_id').eq('date', new Date().toISOString().split('T')[0])
     ])
     if (tasksRes.data) setTasks(tasksRes.data)
-    if (historyRes.data) {
-      setHistory(historyRes.data.map(s => ({ ...s, tasks: JSON.parse(s.tasks_json || '[]') })))
-    }
-    // Get latest insight
+    if (historyRes.data) setHistory(historyRes.data.map(s => ({ ...s, tasks: JSON.parse(s.tasks_json || '[]') })))
+    if (todayRes.data) setTodayIds(new Set(todayRes.data.map(r => r.task_id)))
     const latest = historyRes.data?.[0]
     if (latest?.insight) setInsight(latest.insight)
     setDbReady(true)
@@ -129,34 +133,22 @@ export default function Home() {
     const newTexts = parseInput(input)
     if (!newTexts.length) { setError('No valid tasks found.'); setLoading(false); return }
 
-    // Insert new tasks as pending
     const newTaskRows = newTexts.map(text => ({ text, quadrant: null, priority: null, action: null, delegate_to: null, reason: null, done: false }))
     const { data: inserted } = await supabase.from('tasks').insert(newTaskRows).select()
-
     const allTasks = [...tasks, ...(inserted || [])]
 
     try {
       const res = await fetch('/api/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tasks: allTasks.map(t => ({ id: t.id, text: t.text })) })
       })
       const data = await res.json()
 
-      // Update each task in DB with classification
       await Promise.all(data.tasks.map(ct =>
-        supabase.from('tasks').update({
-          quadrant: ct.quadrant,
-          priority: ct.priority,
-          action: ct.action,
-          delegate_to: ct.delegate_to,
-          reason: ct.reason,
-        }).eq('id', ct.id)
+        supabase.from('tasks').update({ quadrant: ct.quadrant, priority: ct.priority, action: ct.action, delegate_to: ct.delegate_to, reason: ct.reason }).eq('id', ct.id)
       ))
 
-      // Save session
-      const sessionData = { tasks_json: JSON.stringify(data.tasks), insight: data.insight || null, task_count: newTexts.length }
-      await supabase.from('sessions').insert(sessionData)
+      await supabase.from('sessions').insert({ tasks_json: JSON.stringify(data.tasks), insight: data.insight || null, task_count: newTexts.length })
 
       setTasks(data.tasks.map(ct => ({ ...allTasks.find(t => t.id === ct.id), ...ct })))
       setInsight(data.insight || null)
@@ -164,10 +156,41 @@ export default function Home() {
       loadData()
     } catch {
       setError('Classification failed. Try again.')
-      // Remove inserted pending tasks on failure
       if (inserted) await supabase.from('tasks').delete().in('id', inserted.map(t => t.id))
     }
     setLoading(false)
+  }
+
+  const suggestToday = async () => {
+    setSuggesting(true); setError(null)
+    const activeTasks = tasks.filter(t => t.quadrant && !t.done)
+    try {
+      const res = await fetch('/api/suggest-today', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tasks: activeTasks })
+      })
+      const data = await res.json()
+      setSuggestedIds(data.suggested_ids || [])
+      setSuggestReasons(data.reasons || {})
+      setShowSuggestions(true)
+    } catch { setError('Could not generate suggestions.') }
+    setSuggesting(false)
+  }
+
+  const confirmToday = async (ids) => {
+    const today = new Date().toISOString().split('T')[0]
+    await supabase.from('today_tasks').delete().eq('date', today)
+    if (ids.length) {
+      await supabase.from('today_tasks').insert(ids.map(id => ({ task_id: id, date: today })))
+    }
+    setTodayIds(new Set(ids))
+    setShowSuggestions(false)
+    setSuggestedIds([])
+    setView('today')
+  }
+
+  const toggleTodayTask = (id) => {
+    setSuggestedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
   const toggleDone = async (id) => {
@@ -176,27 +199,36 @@ export default function Home() {
     const newDone = !task.done
     await supabase.from('tasks').update({ done: newDone }).eq('id', id)
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: newDone } : t))
+    if (newDone) {
+      const today = new Date().toISOString().split('T')[0]
+      await supabase.from('today_tasks').delete().eq('task_id', id).eq('date', today)
+      setTodayIds(prev => { const n = new Set(prev); n.delete(id); return n })
+    }
   }
 
   const removeTask = async (id) => {
     await supabase.from('tasks').delete().eq('id', id)
+    await supabase.from('today_tasks').delete().eq('task_id', id)
     setTasks(prev => prev.filter(t => t.id !== id))
+    setTodayIds(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
+
+  const reprioritise = async (id, newPriority) => {
+    await supabase.from('tasks').update({ priority: newPriority }).eq('id', id)
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, priority: newPriority } : t))
   }
 
   const clearAll = async () => {
-    await supabase.from('tasks').delete().neq('id', 0)
-    setTasks([]); setInsight(null); setInput('')
+    await supabase.from('tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('today_tasks').delete().eq('date', new Date().toISOString().split('T')[0])
+    setTasks([]); setInsight(null); setInput(''); setTodayIds(new Set())
   }
 
   const extractImage = async (file) => {
     setExtracting(true); setError(null)
     try {
       const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file) })
-      const resp = await fetch('/api/extract-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData: b64, mediaType: file.type || 'image/jpeg' })
-      })
+      const resp = await fetch('/api/extract-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageData: b64, mediaType: file.type || 'image/jpeg' }) })
       const data = await resp.json()
       if (data.tasks?.length) setInput(v => v ? v + '\n' + data.tasks.join('\n') : data.tasks.join('\n'))
       else setError('No tasks found in image.')
@@ -205,10 +237,15 @@ export default function Home() {
   }
 
   const classified = tasks.filter(t => t.quadrant)
-  const grouped = ['Q1','Q2','Q3','Q4'].reduce((a, q) => { a[q] = classified.filter(t => t.quadrant === q); return a }, {})
-  const filtered = activeQ ? { [activeQ]: grouped[activeQ] } : grouped
-  const counts = ['Q1','Q2','Q3','Q4'].reduce((a, q) => { a[q] = grouped[q]?.length || 0; return a }, {})
-  const doneCount = classified.filter(t => t.done).length
+  const todayTasks = classified.filter(t => todayIds.has(t.id))
+  const backlog = classified.filter(t => !todayIds.has(t.id))
+  const grouped = ['Q1','Q2','Q3','Q4'].reduce((a, q) => { a[q] = backlog.filter(t => t.quadrant === q); return a }, {})
+  const filteredBacklog = activeQ ? { [activeQ]: grouped[activeQ] } : grouped
+  const counts = ['Q1','Q2','Q3','Q4'].reduce((a, q) => { a[q] = classified.filter(t => t.quadrant === q).length; return a }, {})
+  const todayDone = todayTasks.filter(t => t.done).length
+  const backlogActive = classified.filter(t => !t.done).length
+
+  const VIEWS = ['today', 'backlog', 'add', 'history']
 
   if (!authed) return <LockScreen onUnlock={() => setAuthed(true)} />
 
@@ -217,11 +254,10 @@ export default function Home() {
       <Head>
         <title>Command Matrix — Fincra</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div style={{ maxWidth: 1020, margin: '0 auto', padding: '20px 16px' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '20px 16px' }}>
 
         {/* HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
@@ -232,29 +268,173 @@ export default function Home() {
               <div style={{ fontSize: 10, color: '#444', letterSpacing: 1, marginTop: 2 }}>Wole · Fincra · {fd(new Date())}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {['Q1','Q2','Q3','Q4'].map(q => (
-                <button key={q} onClick={() => setActiveQ(activeQ === q ? null : q)}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5px 10px', border: `1px solid ${activeQ === q ? Q_CONFIG[q].color : '#1e1e1e'}`, background: activeQ === q ? Q_CONFIG[q].bg : 'transparent', color: counts[q] > 0 ? Q_CONFIG[q].color : '#333', fontFamily: 'inherit', minWidth: 40 }}>
-                  <span style={{ fontSize: 9, fontWeight: 700 }}>{q}</span>
-                  <span style={{ fontSize: 15, fontWeight: 700 }}>{counts[q]}</span>
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
-              {['matrix','history'].map(v => (
-                <button key={v} onClick={() => setView(v)}
-                  style={{ background: 'transparent', border: 'none', borderBottom: `2px solid ${view === v ? '#00D4AA' : 'transparent'}`, color: view === v ? '#fff' : '#444', fontFamily: 'inherit', fontSize: 11, letterSpacing: 1, padding: '6px 14px', textTransform: 'capitalize' }}>
-                  {v}{v === 'history' && history.length > 0 && <span style={{ background: '#1a1a1a', color: '#555', fontSize: 9, padding: '1px 5px', marginLeft: 5 }}>{history.length}</span>}
-                </button>
-              ))}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {['Q1','Q2','Q3','Q4'].map(q => (
+              <div key={q} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5px 10px', border: `1px solid ${counts[q] > 0 ? Q_CONFIG[q].color + '44' : '#1e1e1e'}`, color: counts[q] > 0 ? Q_CONFIG[q].color : '#333', minWidth: 40 }}>
+                <span style={{ fontSize: 9, fontWeight: 700 }}>{q}</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{counts[q]}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5px 10px', border: '1px solid #1e1e1e', color: '#444', minWidth: 40 }}>
+              <span style={{ fontSize: 9, fontWeight: 700 }}>TODO</span>
+              <span style={{ fontSize: 15, fontWeight: 700 }}>{backlogActive}</span>
             </div>
           </div>
         </div>
 
-        {view === 'matrix' && <>
-          {/* INPUT */}
+        {/* NAV */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a', marginBottom: 20, gap: 0 }}>
+          {[
+            { key: 'today', label: `Today (${todayTasks.length})` },
+            { key: 'backlog', label: `Backlog (${backlogActive})` },
+            { key: 'add', label: '+ Add Tasks' },
+            { key: 'history', label: `History (${history.length})` },
+          ].map(v => (
+            <button key={v.key} onClick={() => setView(v.key)}
+              style={{ background: 'transparent', border: 'none', borderBottom: `2px solid ${view === v.key ? '#00D4AA' : 'transparent'}`, color: view === v.key ? '#fff' : '#444', fontFamily: 'inherit', fontSize: 11, letterSpacing: 1, padding: '8px 16px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        {/* TODAY VIEW */}
+        {view === 'today' && <>
+          {/* Suggestion modal */}
+          {showSuggestions && (
+            <div style={{ border: '1px solid #00D4AA33', background: '#091a16', padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 12, color: '#00D4AA', fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>AI SUGGESTED FOR TODAY — confirm or adjust</div>
+              {classified.filter(t => !t.done && (suggestedIds.includes(t.id) || todayIds.has(t.id))).map(task => {
+                const selected = suggestedIds.includes(task.id)
+                return (
+                  <div key={task.id} onClick={() => toggleTodayTask(task.id)}
+                    style={{ display: 'flex', gap: 10, padding: '8px 10px', marginBottom: 6, border: `1px solid ${selected ? '#00D4AA44' : '#1e1e1e'}`, background: selected ? '#0d2018' : 'transparent', cursor: 'pointer' }}>
+                    <div style={{ width: 14, height: 14, border: `1px solid ${selected ? '#00D4AA' : '#333'}`, background: selected ? '#00D4AA' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                      {selected && <span style={{ color: '#000', fontSize: 8, fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: '#ccc', marginBottom: 2 }}>{task.text}</div>
+                      {suggestReasons[task.id] && <div style={{ fontSize: 10, color: '#00D4AA88', fontStyle: 'italic' }}>{suggestReasons[task.id]}</div>}
+                    </div>
+                    <span style={{ fontSize: 9, color: Q_CONFIG[task.quadrant]?.color, alignSelf: 'flex-start', marginTop: 2 }}>{task.quadrant}</span>
+                  </div>
+                )
+              })}
+              <div style={{ fontSize: 10, color: '#333', marginBottom: 10, marginTop: 4 }}>Tick/untick to adjust. Then confirm.</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => confirmToday(suggestedIds)}
+                  style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '8px 18px', fontFamily: 'inherit', fontSize: 10, fontWeight: 700, letterSpacing: 2, cursor: 'pointer' }}>
+                  Confirm Today's List
+                </button>
+                <button onClick={() => setShowSuggestions(false)}
+                  style={{ background: 'transparent', color: '#444', border: '1px solid #222', padding: '8px 14px', fontFamily: 'inherit', fontSize: 10, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Today header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 13, color: '#fff', fontWeight: 700, letterSpacing: 1 }}>Today</div>
+              {todayTasks.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <div style={{ width: 120, height: 2, background: '#1a1a1a', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', background: '#00D4AA', transition: 'width 0.4s', width: `${todayTasks.length ? (todayDone / todayTasks.length) * 100 : 0}%` }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: '#383838' }}>{todayDone}/{todayTasks.length} done</span>
+                </div>
+              )}
+            </div>
+            <button onClick={suggestToday} disabled={suggesting || !classified.length}
+              style={{ background: 'transparent', border: '1px solid #00D4AA44', color: '#00D4AA', fontFamily: 'inherit', fontSize: 10, padding: '7px 14px', cursor: 'pointer', letterSpacing: 1, opacity: suggesting ? 0.6 : 1 }}>
+              {suggesting ? 'Thinking...' : '◈ Suggest today'}
+            </button>
+          </div>
+
+          {todayTasks.length === 0 && !showSuggestions && (
+            <div style={{ textAlign: 'center', padding: '50px 0' }}>
+              <div style={{ fontSize: 12, color: '#242424', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>No tasks for today yet</div>
+              <div style={{ fontSize: 10, color: '#1c1c1c', marginBottom: 16 }}>Hit "Suggest today" to let AI pick your list, or add tasks manually from the backlog.</div>
+              <button onClick={suggestToday} disabled={suggesting || !classified.length}
+                style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '10px 20px', fontFamily: 'inherit', fontSize: 10, fontWeight: 700, letterSpacing: 2, cursor: 'pointer', opacity: !classified.length ? 0.4 : 1 }}>
+                {suggesting ? 'Thinking...' : '◈ Suggest today'}
+              </button>
+            </div>
+          )}
+
+          {todayTasks.sort((a, b) => {
+            const qOrder = { Q1: 0, Q2: 1, Q3: 2, Q4: 3 }
+            const pOrder = { P1: 0, P2: 1, P3: 2 }
+            return (qOrder[a.quadrant] - qOrder[b.quadrant]) || (pOrder[a.priority] - pOrder[b.priority])
+          }).map(task => (
+            <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} showReprioritise={true} />
+          ))}
+
+          {todayTasks.length > 0 && (
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #111' }}>
+              <button onClick={() => { setView('backlog'); setShowDone(false) }}
+                style={{ background: 'transparent', border: 'none', color: '#333', fontFamily: 'inherit', fontSize: 10, cursor: 'pointer', letterSpacing: 1 }}>
+                View full backlog →
+              </button>
+            </div>
+          )}
+        </>}
+
+        {/* BACKLOG VIEW */}
+        {view === 'backlog' && <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['Q1','Q2','Q3','Q4'].map(q => (
+                <button key={q} onClick={() => setActiveQ(activeQ === q ? null : q)}
+                  style={{ padding: '4px 8px', border: `1px solid ${activeQ === q ? Q_CONFIG[q].color : '#1e1e1e'}`, background: activeQ === q ? Q_CONFIG[q].bg : 'transparent', color: activeQ === q ? Q_CONFIG[q].color : '#444', fontFamily: 'inherit', fontSize: 9, fontWeight: 700, cursor: 'pointer' }}>
+                  {q} ({(grouped[q] || []).length})
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button onClick={() => setShowDone(v => !v)} style={{ background: 'transparent', border: 'none', color: '#2e2e2e', fontFamily: 'inherit', fontSize: 10, cursor: 'pointer' }}>{showDone ? 'Hide done' : 'Show done'}</button>
+              {classified.length > 0 && <button onClick={clearAll} style={{ background: 'transparent', color: '#2a2a2a', border: '1px solid #1a1a1a', padding: '5px 10px', fontFamily: 'inherit', fontSize: 9, cursor: 'pointer' }}>Clear all</button>}
+            </div>
+          </div>
+
+          {insight && <div style={{ background: '#0d1a1a', border: '1px solid #00D4AA18', padding: '10px 14px', marginBottom: 14, display: 'flex', gap: 10 }}>
+            <span style={{ color: '#00D4AA', flexShrink: 0 }}>◈</span>
+            <span style={{ fontSize: 11, color: '#7ac9bb', lineHeight: 1.6 }}>{insight}</span>
+          </div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 14 }}>
+            {Object.entries(filteredBacklog).map(([q, items]) => {
+              if (!items.length) return null
+              const cfg = Q_CONFIG[q]
+              const visible = showDone ? items : items.filter(t => !t.done)
+              if (!visible.length) return null
+              return (
+                <div key={q} style={{ border: `1px solid ${cfg.border}`, background: cfg.bg, padding: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #ffffff05' }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: cfg.color, textTransform: 'uppercase' }}>{cfg.label}</div>
+                      <div style={{ fontSize: 9, color: '#2e2e2e', marginTop: 2 }}>{cfg.sub}</div>
+                    </div>
+                    <div style={{ fontSize: 26, fontWeight: 700, color: cfg.color, lineHeight: 1 }}>{visible.length}</div>
+                  </div>
+                  {visible.sort((a, b) => (a.priority || '').localeCompare(b.priority || '')).map(task => (
+                    <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} showReprioritise={true} />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+
+          {backlogActive === 0 && !showDone && (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{ fontSize: 13, color: '#242424', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>{dbReady ? 'Backlog clear' : 'Loading...'}</div>
+            </div>
+          )}
+        </>}
+
+        {/* ADD TASKS VIEW */}
+        {view === 'add' && <>
           <div style={{ marginBottom: 14, border: `1px solid ${drag ? '#00D4AA' : '#1e1e1e'}`, background: '#0d0d0d', position: 'relative', transition: 'border-color 0.2s' }}
             onDragOver={e => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)}
             onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files?.[0]; if (f?.type.startsWith('image/')) extractImage(f) }}>
@@ -265,68 +445,23 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', borderTop: '1px solid #141414', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => fileRef.current?.click()} disabled={extracting}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid #1e1e1e', color: '#444', fontSize: 10, padding: '5px 10px' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid #1e1e1e', color: '#444', fontSize: 10, padding: '5px 10px', cursor: 'pointer' }}>
                   {extracting ? <span style={{ color: '#F5A623' }}>Extracting...</span> : <><span style={{ color: '#00D4AA', fontSize: 13 }}>⊕</span> Upload image</>}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) extractImage(f); e.target.value = '' }} />
                 <span style={{ fontSize: 9, color: '#2a2a2a' }}>⌘+Enter · drag image to drop</span>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {classified.length > 0 && <button onClick={clearAll} style={{ background: 'transparent', color: '#333', border: '1px solid #1a1a1a', padding: '8px 14px', fontSize: 10 }}>Clear all</button>}
-                <button onClick={classify} disabled={loading || !input.trim()}
-                  style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '8px 18px', fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: loading || !input.trim() ? 0.5 : 1 }}>
-                  {loading ? 'Classifying...' : 'Classify'}
-                </button>
-              </div>
+              <button onClick={classify} disabled={loading || !input.trim()}
+                style={{ background: '#00D4AA', color: '#000', border: 'none', padding: '8px 18px', fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer', opacity: loading || !input.trim() ? 0.5 : 1 }}>
+                {loading ? 'Classifying...' : 'Classify & Add'}
+              </button>
             </div>
           </div>
-
           {error && <div style={{ color: '#E84040', fontSize: 11, padding: '4px 0', letterSpacing: 1 }}>{error}</div>}
-
-          {insight && <div style={{ background: '#0d1a1a', border: '1px solid #00D4AA18', padding: '10px 14px', marginBottom: 14, display: 'flex', gap: 10 }}>
-            <span style={{ color: '#00D4AA', flexShrink: 0 }}>◈</span>
-            <span style={{ fontSize: 11, color: '#7ac9bb', lineHeight: 1.6 }}>{insight}</span>
-          </div>}
-
-          {classified.length > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <div style={{ flex: 1, height: 2, background: '#1a1a1a', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', background: '#00D4AA', transition: 'width 0.4s', width: `${classified.length ? (doneCount / classified.length) * 100 : 0}%` }} />
-            </div>
-            <span style={{ fontSize: 10, color: '#383838', letterSpacing: 1, whiteSpace: 'nowrap' }}>{doneCount}/{classified.length} done</span>
-            <button onClick={() => setShowDone(v => !v)} style={{ background: 'transparent', border: 'none', color: '#2e2e2e', fontSize: 10, whiteSpace: 'nowrap' }}>{showDone ? 'Hide done' : 'Show done'}</button>
-          </div>}
-
-          {classified.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 14 }}>
-            {Object.entries(filtered).map(([q, items]) => {
-              if (!items.length) return null
-              const cfg = Q_CONFIG[q]
-              const visible = showDone ? items : items.filter(t => !t.done)
-              return (
-                <div key={q} style={{ border: `1px solid ${cfg.border}`, background: cfg.bg, padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #ffffff05' }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: cfg.color, textTransform: 'uppercase' }}>{cfg.label}</div>
-                      <div style={{ fontSize: 9, color: '#2e2e2e', marginTop: 2 }}>{cfg.sub}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 26, fontWeight: 700, color: cfg.color, lineHeight: 1 }}>{visible.length}</div>
-                      {items.some(t => t.done) && <div style={{ fontSize: 9, color: '#333', marginTop: 1 }}>{items.filter(t => t.done).length} done</div>}
-                    </div>
-                  </div>
-                  {visible.sort((a, b) => (a.priority || '').localeCompare(b.priority || '')).map(task => (
-                    <TaskCard key={task.id} task={task} quadrant={q} onToggleDone={toggleDone} onRemove={removeTask} />
-                  ))}
-                </div>
-              )
-            })}
-          </div>}
-
-          {classified.length === 0 && !loading && <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 13, color: '#242424', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>{dbReady ? 'Nothing classified yet' : 'Loading...'}</div>
-            <div style={{ fontSize: 10, color: '#1c1c1c' }}>{dbReady ? 'Type tasks, paste a list, or drop a photo of your notes.' : ''}</div>
-          </div>}
+          {loading && <div style={{ fontSize: 11, color: '#444', padding: '8px 0', letterSpacing: 1 }}>Classifying with full team context — this takes ~10 seconds...</div>}
         </>}
 
+        {/* HISTORY VIEW */}
         {view === 'history' && <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {history.length === 0
             ? <div style={{ textAlign: 'center', padding: '60px 0' }}><div style={{ fontSize: 13, color: '#242424', letterSpacing: 2, textTransform: 'uppercase' }}>No history yet</div></div>
@@ -357,21 +492,12 @@ export default function Home() {
                     <div style={{ fontSize: 9, color: '#2e2e2e', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>Delegated</div>
                     {dels.map((t, i) => (
                       <div key={i} style={{ fontSize: 11, display: 'flex', marginBottom: 3, flexWrap: 'wrap' }}>
-                        <span style={{ color: '#F5A623', minWidth: 60 }}>{t.delegate_to || 'TBD'}</span>
+                        <span style={{ color: '#F5A623', minWidth: 80 }}>{t.delegate_to || 'TBD'}</span>
                         <span style={{ color: '#333', margin: '0 6px' }}>—</span>
                         <span style={{ color: '#555' }}>{t.text}</span>
                       </div>
                     ))}
                   </div>}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: '1px solid #111', paddingTop: 10 }}>
-                    {(s.tasks || []).map((t, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10 }}>
-                        <span style={{ color: Q_CONFIG[t.quadrant]?.color || '#555', fontSize: 9, minWidth: 22, fontWeight: 700 }}>{t.quadrant}</span>
-                        <span style={{ color: '#333', fontSize: 9, minWidth: 18 }}>{t.priority}</span>
-                        <span style={{ color: '#555', fontSize: 11 }}>{t.text}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )
             })
