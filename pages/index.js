@@ -135,7 +135,7 @@ function SimilarTasksModal({ similar, reason, allTasks, onApply, onDismiss, corr
   )
 }
 
-function TaskCard({ task, onToggleDone, onRemove, onReprioritise, onCorrect, showReprioritise }) {
+function TaskCard({ task, onToggleDone, onRemove, onReprioritise, onRequadrant, onCorrect, showReprioritise }) {
   const [showCorrection, setShowCorrection] = useState(false)
   const cfg = Q_CONFIG[task.quadrant] || Q_CONFIG.Q4
   return (
@@ -152,12 +152,16 @@ function TaskCard({ task, onToggleDone, onRemove, onReprioritise, onCorrect, sho
           {task.delegate_to && <span style={{ fontSize: 9, color: '#F5A623' }}>→ {task.delegate_to}</span>}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-          {showReprioritise && (
+          {showReprioritise && (<>
+            <select value={task.quadrant || 'Q1'} onChange={e => onRequadrant(task.id, e.target.value)}
+              style={{ background: '#111', border: '1px solid #1a1a1a', color: Q_CONFIG[task.quadrant]?.color || '#444', fontSize: 9, padding: '1px 3px', fontFamily: 'inherit', cursor: 'pointer' }}>
+              {QUADRANTS.map(q => <option key={q} value={q}>{q}</option>)}
+            </select>
             <select value={task.priority || 'P1'} onChange={e => onReprioritise(task.id, e.target.value)}
               style={{ background: '#111', border: '1px solid #1a1a1a', color: '#444', fontSize: 9, padding: '1px 3px', fontFamily: 'inherit', cursor: 'pointer' }}>
               {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-          )}
+          </>)}
           <button onClick={() => setShowCorrection(v => !v)} title="Correct this classification"
             style={{ background: 'transparent', border: 'none', color: showCorrection ? '#F5A623' : '#252525', fontSize: 12, padding: 0, cursor: 'pointer', lineHeight: 1 }}>↺</button>
           <button onClick={() => onRemove(task.id)} style={{ background: 'transparent', border: 'none', color: '#252525', fontSize: 15, padding: 0, lineHeight: 1, cursor: 'pointer' }}>×</button>
@@ -343,6 +347,15 @@ export default function Home() {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, priority: newPriority } : t))
   }
 
+  const requadrant = async (id, newQuadrant) => {
+    const task = tasks.find(t => t.id === id)
+    if (!task || task.quadrant === newQuadrant) return
+    await supabase.from('tasks').update({ quadrant: newQuadrant }).eq('id', id)
+    await supabase.from('decision_log').insert({ decision_type: 'requadrant', task_id: id, task_text: task.text, quadrant: task.quadrant, from_value: task.quadrant, to_value: newQuadrant })
+    await supabase.from('corrections').insert({ task_id: id, task_text: task.text, original_quadrant: task.quadrant, original_priority: task.priority, original_action: task.action, original_delegate_to: task.delegate_to, corrected_quadrant: newQuadrant, corrected_priority: task.priority, corrected_action: task.action, corrected_delegate_to: task.delegate_to, correction_note: 'Moved via quadrant dropdown' })
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, quadrant: newQuadrant } : t))
+  }
+
   const clearAll = async () => {
     await supabase.from('tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabase.from('today_tasks').delete().eq('date', new Date().toISOString().split('T')[0])
@@ -491,7 +504,7 @@ export default function Home() {
             const po = { P1: 0, P2: 1, P3: 2 }
             return (qo[a.quadrant] - qo[b.quadrant]) || (po[a.priority] - po[b.priority])
           }).map(task => (
-            <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} onCorrect={handleCorrect} showReprioritise={true} />
+            <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} onRequadrant={requadrant} onCorrect={handleCorrect} showReprioritise={true} />
           ))}
         </>}
 
@@ -532,7 +545,7 @@ export default function Home() {
                     <div style={{ fontSize: 26, fontWeight: 700, color: cfg.color, lineHeight: 1 }}>{visible.length}</div>
                   </div>
                   {visible.sort((a, b) => (a.priority || '').localeCompare(b.priority || '')).map(task => (
-                    <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} onCorrect={handleCorrect} showReprioritise={true} />
+                    <TaskCard key={task.id} task={task} onToggleDone={toggleDone} onRemove={removeTask} onReprioritise={reprioritise} onRequadrant={requadrant} onCorrect={handleCorrect} showReprioritise={true} />
                   ))}
                 </div>
               )
