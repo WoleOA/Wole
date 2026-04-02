@@ -1,0 +1,31 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  min-height: 100vh;
+}
+
+::selection { background: #00D4AA33; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; }
+
+textarea, input, button { font-family: inherit; }
+
+textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 13px;
+  padding: 16px;
+  resize: none;
+  outline: none;
+  line-height: 1.7;
+  min-height: 120px;
+}
+
+button { cursor: pointer; }
